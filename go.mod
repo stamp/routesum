@@ -1,4 +1,4 @@
-module github.com/PatrickCronin/routesum
+module github.com/stamp/routesum
 
 go 1.19
 
