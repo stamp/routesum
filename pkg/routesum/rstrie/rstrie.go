@@ -5,7 +5,7 @@ import (
 	"bytes"
 	"container/list"
 
-	"github.com/PatrickCronin/routesum/pkg/routesum/bitslice"
+	"github.com/stamp/routesum/pkg/routesum/bitslice"
 )
 
 // RSTrie is a radix-like trie of radix 2 whose stored "words" are the binary representations of networks and IPs. An

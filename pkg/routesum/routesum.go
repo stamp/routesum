@@ -6,10 +6,9 @@ import (
 	"net/netip"
 	"strings"
 
-	"github.com/PatrickCronin/routesum/pkg/routesum/bitslice"
-	"github.com/PatrickCronin/routesum/pkg/routesum/rstrie"
 	"github.com/pkg/errors"
-	"inet.af/netaddr"
+	"github.com/stamp/routesum/pkg/routesum/bitslice"
+	"github.com/stamp/routesum/pkg/routesum/rstrie"
 )
 
 // RouteSum has methods supporting route summarization of networks and hosts
@@ -109,7 +108,7 @@ func (rs *RouteSum) SummaryStrings() []string {
 		if len(bits) == 8*4 {
 			strs = append(strs, ip.String())
 		} else {
-			ipPrefix := netaddr.IPPrefixFrom(ip, uint8(len(bits)))
+			ipPrefix := netip.PrefixFrom(ip, len(bits))
 			strs = append(strs, ipPrefix.String())
 		}
 	}
@@ -121,7 +120,7 @@ func (rs *RouteSum) SummaryStrings() []string {
 		if len(bits) == 8*16 {
 			strs = append(strs, ip.String())
 		} else {
-			ipPrefix := netaddr.IPPrefixFrom(ip, uint8(len(bits)))
+			ipPrefix := netip.PrefixFrom(ip, len(bits))
 			strs = append(strs, ipPrefix.String())
 		}
 	}
@@ -129,16 +128,48 @@ func (rs *RouteSum) SummaryStrings() []string {
 	return strs
 }
 
-func ipv4FromBits(bits bitslice.BitSlice) netaddr.IP {
+// Summary returns a summary of all received routes as a slice of IPs and a slice of networks.
+func (rs *RouteSum) Summary() ([]netip.Addr, []netip.Prefix) {
+	ips := []netip.Addr{}
+	nets := []netip.Prefix{}
+
+	ipv4BitSlices := rs.ipv4.Contents()
+	for _, bits := range ipv4BitSlices {
+		ip := ipv4FromBits(bits)
+
+		if len(bits) == 8*4 {
+			ips = append(ips, ip)
+		} else {
+			ipPrefix := netip.PrefixFrom(ip, len(bits))
+			nets = append(nets, ipPrefix)
+		}
+	}
+
+	ipv6BitSlices := rs.ipv6.Contents()
+	for _, bits := range ipv6BitSlices {
+		ip := ipv6FromBits(bits)
+
+		if len(bits) == 8*16 {
+			ips = append(ips, ip)
+		} else {
+			ipPrefix := netip.PrefixFrom(ip, len(bits))
+			nets = append(nets, ipPrefix)
+		}
+	}
+
+	return ips, nets
+}
+
+func ipv4FromBits(bits bitslice.BitSlice) netip.Addr {
 	bytes := bits.ToBytes(4)
 	byteArray := [4]byte{}
 	copy(byteArray[:], bytes[0:4])
-	return netaddr.IPFrom4(byteArray)
+	return netip.AddrFrom4(byteArray)
 }
 
-func ipv6FromBits(bits bitslice.BitSlice) netaddr.IP {
+func ipv6FromBits(bits bitslice.BitSlice) netip.Addr {
 	bytes := bits.ToBytes(16)
 	byteArray := [16]byte{}
 	copy(byteArray[:], bytes[0:16])
-	return netaddr.IPv6Raw(byteArray)
+	return netip.AddrFrom16(byteArray)
 }
